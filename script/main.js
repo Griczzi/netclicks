@@ -24,7 +24,7 @@ const searchFormInput = document.querySelector('.search__form-input');
 
 // Делаем Loading
 const loading = document.createElement('div');
-loading.className = 'loading'
+loading.className = 'loading';
 
 /////////////////
 const DBServis = class {
@@ -51,22 +51,31 @@ const DBServis = class {
         //https://api.themoviedb.org/3/search/tv?api_key=<<api_key>>&language=en-US&page=1&query=000&include_adult=false
     }
 
+    getTvShow = (id) => {
+        return this.getData(`${SERVER}/tv/${id}?api_key=${API_KEY}&language=ru-RU`);
+    }
 }
 
-console.log(new DBServis().getSearchResult('Папа'));
+
+//console.log(new DBServis().getSearchResult('Папа'));
 
 
 const renderCard = responce => {
     console.log(responce);
     tvShowList.textContent = '';
 
-    responce.results.forEach(item => {
+    if( responce.results == '' ) {
+        tvShows.innerHTML = `<img class="" src="/img/404page.jpg">`;
+        loading.remove();
+    }
 
+    responce.results.forEach(item => {
         const {
             backdrop_path: backdrop,
             name: title,
             poster_path: poster,
             vote_average : vote,
+            id
         } = item;
 
 
@@ -77,23 +86,34 @@ const renderCard = responce => {
         const card = document.createElement('li');
         card.classList.add('tv-shows__item');
         card.innerHTML = `
-        <a href="#" class="tv-card">
+        <a href="#" id="${id}" class="tv-card">
             ${voteElem}
             <img class="tv-card__img"
                 src="${posterIMG}"
                 data-backdrop="${backdropIMG}"
-                alt="Звёздные войны: Повстанцы">
+                alt="${title}">
             <h4 class="tv-card__head">${title}</h4>
         </a>
         `;
         loading.remove();
         tvShowList.append(card);
+       
     });
 };
 
+searchForm.addEventListener('submit', event => {
+    event.preventDefault();
+    const value = searchFormInput.value.trim(); //trim уберает пробелы в запросе
+    if (value) {
+        tvShows.append(loading);
+        new DBServis().getSearchResult(value).then(renderCard);
+    }
+    searchFormInput.value = '';
+});
+
 {
 tvShows.append(loading);  
-new DBServis().getTestData().then(renderCard)
+new DBServis().getTestData().then(renderCard);
 }
 
 ///////////////////////// открытие звкрытие меню
@@ -108,14 +128,13 @@ document.addEventListener('click', (event) => {
     if (!event.target.closest('.left-menu')) {
         leftMenu.classList.remove('openMenu');
         hamburger.classList.remove('open');
-
-        console.log('click outside');
     }
 });
 
 ////////////////////////////////// меню выподающее
 
 leftMenu.addEventListener('click', (event) => {
+    event.preventDefault();
     const target = event.target;
     const dropdown = target.closest('.dropdown');
     if (dropdown) {
@@ -124,7 +143,7 @@ leftMenu.addEventListener('click', (event) => {
         leftMenu.classList.add('openMenu');
         hamburger.classList.add('open');
     }
-    console.log(target.closest('.dropdown'));
+    //console.log(target.closest('.dropdown'));
 });
 
 // открытие модального окна
@@ -136,11 +155,12 @@ tvShowList.addEventListener('click', (event) => {
     const card = target.closest('.tv-card')
 
     if (card) {
-
-        new DBServis().getTestCard()
+        //console.log(card);
+        new DBServis().getTvShow(card.id)
             .then(response => {
-                console.log(response);
+                //console.log(response);
                 tvCardImg.src = IMG_URL + response.poster_path;
+                tvCardImg.alt = response.name;
                 modalTitle.textContent = response.name;
 
                 genresList.textContent = ''; //очищаем что бы правильно показывал жанры.Если не очистить будут показаны все жанры
@@ -155,13 +175,19 @@ tvShowList.addEventListener('click', (event) => {
                 //     genresList.innerHTML += `<li>${item.name}</li>`;
                 // });
 
-                rating
-                description
-                modalLink
+                rating.textContent = response.vote_average;
+                description.textContent = response.overview;
+                modalLink.href = response.homepage;
+
+                
             })
             .then(() => {
+
                 document.body.style.overflow = 'hidden';
                 modal.classList.remove('hide');
+
+                //modal.append(loading);      // Loader  тут !!!!!!!!!!!!!!!
+
             })
     }
 });

@@ -5,6 +5,7 @@
 ///////////////////////// menu
 const IMG_URL = 'https://image.tmdb.org/t/p/w185_and_h278_bestv2';
 const API_KEY = 'd38cc444389c05c6b074467fd263f95f';
+const SERVER = 'https://api.themoviedb.org/3';
 
 const leftMenu = document.querySelector('.left-menu');
 const hamburger = document.querySelector('.hamburger');
@@ -17,7 +18,8 @@ const genresList = document.querySelector('.genres-list');
 const rating = document.querySelector('.rating');
 const description = document.querySelector('.description');
 const modalLink = document.querySelector('.modal__link');
-
+const searchForm = document.querySelector('.search__form');
+const searchFormInput = document.querySelector('.search__form-input');
 
 
 // Делаем Loading
@@ -44,7 +46,15 @@ const DBServis = class {
         return this.getData('card.json');
     }
 
+    getSearchResult = (query) => {
+        return this.getData(`${SERVER}/search/tv?api_key=${API_KEY}&query=${query}&language=ru-RU`)
+        //https://api.themoviedb.org/3/search/tv?api_key=<<api_key>>&language=en-US&page=1&query=000&include_adult=false
+    }
+
 }
+
+console.log(new DBServis().getSearchResult('Папа'));
+
 
 const renderCard = responce => {
     console.log(responce);
@@ -131,16 +141,28 @@ tvShowList.addEventListener('click', (event) => {
             .then(response => {
                 console.log(response);
                 tvCardImg.src = IMG_URL + response.poster_path;
-                modalTitle
-                genresList
+                modalTitle.textContent = response.name;
+
+                genresList.textContent = ''; //очищаем что бы правильно показывал жанры.Если не очистить будут показаны все жанры
+                for (const item of response.genres) {
+                    genresList.innerHTML += `<li>${item.name}</li>`
+                }
+                // genresList.innerHTML = response.genres.reduce((acc, item) => { //через reduce
+                //     return `${acc} <li>${item.name}</li>`
+                // }, '');
+
+                // response.genres.forEach(item => {                  //через forEach
+                //     genresList.innerHTML += `<li>${item.name}</li>`;
+                // });
+
                 rating
                 description
                 modalLink
             })
-
-        //document.body.style.backgroundColor = 'rgba(0, 0, 0, .8)';
-        document.body.style.overflow = 'hidden';
-        modal.classList.remove('hide');
+            .then(() => {
+                document.body.style.overflow = 'hidden';
+                modal.classList.remove('hide');
+            })
     }
 });
 

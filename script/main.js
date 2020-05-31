@@ -24,6 +24,7 @@ const preloader = document.querySelector('.preloader');
 const dropdown = document.querySelectorAll('.dropdown');
 const tvShowsHead = document.querySelector('.tv-shows__head');
 const posterWrapper = document.querySelector('.poster__wrapper');
+const pagination = document.querySelector('.pagination');
 
 
 // Делаем Loading
@@ -51,14 +52,20 @@ const DBServis = class {
     }
 
     getSearchResult = (query) => {
-        return this.getData(`${SERVER}/search/tv?api_key=${API_KEY}&query=${query}&language=ru-RU`)
+        this.temp = `${SERVER}/search/tv?api_key=${API_KEY}&query=${query}&language=ru-RU`;
+        return this.getData(this.temp);
         //https://api.themoviedb.org/3/search/tv?api_key=<<api_key>>&language=en-US&page=1&query=000&include_adult=false
     }
+    getNextPage = (page) => {
+        // const url = `${this.url}&page=${page}`;
+        // return this.getData(url);
+        return this.getData(this.temp + '&page=' + page);
+    }
+
 
     getTvShow = (id) => {
         return this.getData(`${SERVER}/tv/${id}?api_key=${API_KEY}&language=ru-RU`);
     }
-
 
     getTopRated = () => {
         return this.getData(`${SERVER}/tv/top_rated?api_key=${API_KEY}&language=ru-RU&page=1`);
@@ -82,6 +89,8 @@ const renderCard = (responce, target) => {
     //debugger;
     console.log(responce);
     tvShowList.textContent = '';
+
+
 
     if( !responce.total_results ) {  /////////////// ошибка 404 responce.results == '' !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
         loading.remove();
@@ -121,6 +130,26 @@ const renderCard = (responce, target) => {
         tvShowList.append(card);
        
     });
+
+    pagination.innerHTML = '';
+
+    // if(responce.total_pages > 1) {
+    //     for(let i = 1; i <= responce.total_pages; i++) {
+    //         pagination.innerHTML += `<li><a href="#" class="pages">${i}</a></li>`;
+    //     }
+    // }
+    if (responce.total_pages > 1) {
+        const total = responce.total_pages <= 7 ? responce.total_pages : 7;
+        const currentPage = responce.page;
+        for (let i = 1; i <= total; i++) {
+            if (i === currentPage) {
+                pagination.innerHTML += `<li><a href="#">${i}</a></li>`
+            } else {
+                pagination.innerHTML += `<li><a href="#" class="pages" >${i}</a></li>`
+            }
+
+        }
+    }
 };
 
 searchForm.addEventListener('submit', event => {
@@ -290,3 +319,13 @@ const changeImage = (event) => {
 
 tvShowList.addEventListener('mouseover', changeImage);
 tvShowList.addEventListener('mouseout', changeImage);
+
+pagination.addEventListener('click', event => {
+    event.preventDefault();
+    const target = event.target;
+
+    if (target.classList.contains('pages')) {
+        tvShows.append(loading);
+        new DBServis().getNextPage(target.textContent).then(renderCard);
+    }
+});

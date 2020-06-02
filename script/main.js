@@ -56,10 +56,11 @@ const DBServis = class {
         return this.getData(this.temp);
         //https://api.themoviedb.org/3/search/tv?api_key=<<api_key>>&language=en-US&page=1&query=000&include_adult=false
     }
-    getNextPage = (page) => {
+    getNextPage = (page, query) => {
         // const url = `${this.url}&page=${page}`;
         // return this.getData(url);
-        return this.getData(this.temp + '&page=' + page);
+        return this.getData(`${SERVER}/search/tv?api_key=${API_KEY}&language=ru-RU&page=${page}&query=${query}`);
+        // return this.getData(this.temp + '&page=' + page);
     }
 
 
@@ -322,8 +323,8 @@ tvShowList.addEventListener('mouseout', changeImage);
 
 pagination.addEventListener('click', event => {
     event.preventDefault();
-    const target = event.target;
 
+    const target = event.target;
     if (target.classList.contains('pages')) {
         tvShows.append(loading);
         new DBServis().getNextPage(target.textContent).then(renderCard);

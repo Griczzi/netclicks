@@ -330,3 +330,5 @@ pagination.addEventListener('click', event => {
         new DBServis().getNextPage(target.textContent).then(renderCard);
     }
 });
+
+// Доделать погинацию ошибка в получение данных

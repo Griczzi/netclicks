@@ -25,6 +25,7 @@ const dropdown = document.querySelectorAll('.dropdown');
 const tvShowsHead = document.querySelector('.tv-shows__head');
 const posterWrapper = document.querySelector('.poster__wrapper');
 const pagination = document.querySelector('.pagination');
+const trailer = document.getElementById('trailer');
 
 
 // Делаем Loading
@@ -79,6 +80,10 @@ const DBServis = class {
     }
     getWeek = () => {
         return this.getData(`${SERVER}/tv/on_the_air?api_key=${API_KEY}&language=ru-RU&page=1`);
+    }
+
+    getVideo = id => {
+        return this.getResource(`${SERVER}/tv/${id}videos?api_key=${API_KEY}&language=ru-RU`);
     }
 }
 
@@ -251,34 +256,52 @@ tvShowList.addEventListener('click', (event) => {
         preloader.style.display = 'block';
 
         new DBServis().getTvShow(card.id)
-            .then(response => {
+            .then(responce => {
 
-                if (response.poster_path) {
-                    tvCardImg.src = IMG_URL + response.poster_path;
-                    tvCardImg.alt = response.name;
+                if (responce.poster_path) {
+                    tvCardImg.src = IMG_URL + responce.poster_path;
+                    tvCardImg.alt = responce.name;
                 } else {
                     tvCardImg.src = 'img/no-poster.jpg';
                 }
 
                 
-                modalTitle.textContent = response.name;
+                modalTitle.textContent = responce.name;
                 genresList.textContent = ''; //очищаем что бы правильно показывал жанры.Если не очистить будут показаны все жанры
-                for (const item of response.genres) {
+                for (const item of responce.genres) {
                     genresList.innerHTML += `<li>${item.name}</li>`
                 }
-                // genresList.innerHTML = response.genres.reduce((acc, item) => { //через reduce
+                // genresList.innerHTML = responce.genres.reduce((acc, item) => { //через reduce
                 //     return `${acc} <li>${item.name}</li>`
                 // }, '');
 
-                // response.genres.forEach(item => {                  //через forEach
+                // responce.genres.forEach(item => {                  //через forEach
                 //     genresList.innerHTML += `<li>${item.name}</li>`;
                 // });
 
-                rating.textContent = response.vote_average;
-                description.textContent = response.overview;
-                modalLink.href = response.homepage;
+                rating.textContent = responce.vote_average;
+                description.textContent = responce.overview;
+                modalLink.href = responce.homepage;
 
-                
+                return responce.id
+            })
+            .then(DBServis.getVideo)
+            .then(responce => {
+                responce.results.forEach(item => {
+                    const trailerItem = document.createElement('li');
+
+                    trailerItem.innerHTML = `
+                        <iframe 
+                            width="560" 
+                            height="315" 
+                            src="https://www.youtube.com/embed/${item.key}" 
+                            frameborder="0"  
+                            allowfullscreen>
+                        </iframe>
+                        `;
+
+                    trailer.append(trailerItem);
+                })
             })
             .then(() => {
 
